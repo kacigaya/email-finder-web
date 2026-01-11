@@ -1,3 +1,24 @@
+// Dark mode functionality
+function initDarkMode() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const html = document.documentElement;
+
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        html.classList.add('dark');
+    } else {
+        html.classList.remove('dark');
+    }
+
+    // Toggle dark mode
+    darkModeToggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+        localStorage.setItem('theme', currentTheme);
+    });
+}
+
 // Language detection and translation
 function getBrowserLanguage() {
     const lang = navigator.language || navigator.userLanguage;
@@ -28,10 +49,11 @@ function translatePage(lang) {
     });
 }
 
-// Initialize translations
+// Initialize translations and dark mode
 document.addEventListener('DOMContentLoaded', () => {
     const userLang = getBrowserLanguage();
     translatePage(userLang);
+    initDarkMode();
 });
 
 // Email formatting functions
@@ -281,29 +303,29 @@ function removePerson(id) {
 // Update the people list display
 function updatePeopleList() {
     peopleList.innerHTML = '';
-    
+
     if (people.length === 0) {
         peopleList.innerHTML = `
-            <div class="p-3 sm:p-4 border border-gray-200 rounded-lg">
-                <p class="text-sm sm:text-base text-gray-600" data-i18n="noResults">
+            <div class="p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400" data-i18n="noResults">
                     Aucune personne ajoutée. Utilisez le formulaire ci-dessus pour ajouter des personnes.
                 </p>
             </div>
         `;
         return;
     }
-    
+
     people.forEach(person => {
         const personElement = document.createElement('div');
-        personElement.className = 'flex items-center justify-between p-3 sm:p-4 border border-gray-200 rounded-lg mb-2';
+        personElement.className = 'flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg mb-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200';
         personElement.innerHTML = `
             <div class="flex-grow">
-                <p class="text-sm sm:text-base font-medium">${person.firstName} ${person.lastName}</p>
-                <p class="text-xs sm:text-sm text-gray-500">@${person.domain}</p>
+                <p class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">${person.firstName} ${person.lastName}</p>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">@${person.domain}</p>
             </div>
-            <button 
+            <button
                 onclick="removePerson(${person.id})"
-                class="ml-4 text-red-600 hover:text-red-800 transition duration-200"
+                class="ml-4 text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition duration-200"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -364,8 +386,8 @@ async function copyToClipboard(text, button) {
 function generateEmailSuggestions() {
     if (people.length === 0) {
         resultsContainer.innerHTML = `
-            <div class="p-3 sm:p-4 border border-gray-200 rounded-lg">
-                <p class="text-sm sm:text-base text-gray-600" data-i18n="noResults">
+            <div class="p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400" data-i18n="noResults">
                     Ajoutez des personnes pour générer des suggestions d'emails.
                 </p>
             </div>
@@ -387,12 +409,12 @@ function generateEmailSuggestions() {
     resultsContainer.innerHTML = `
         <div class="space-y-4">
             ${suggestions.map((suggestion, index) => `
-                <div class="p-3 sm:p-4 border border-gray-200 rounded-lg">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-sm sm:text-base font-medium">${suggestion.name} (@${suggestion.domain})</h3>
-                        <button 
+                <div class="p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100">${suggestion.name} (@${suggestion.domain})</h3>
+                        <button
                             id="copy-person-${index}"
-                            class="text-blue-600 hover:text-blue-800 transition duration-200"
+                            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition duration-200"
                             title="Copier les emails"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -400,17 +422,17 @@ function generateEmailSuggestions() {
                             </svg>
                         </button>
                     </div>
-                    <ul class="space-y-1">
+                    <ul class="space-y-1.5">
                         ${suggestion.patterns.map(pattern => `
-                            <li class="text-sm sm:text-base text-gray-600">${pattern}</li>
+                            <li class="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-mono">${pattern}</li>
                         `).join('')}
                     </ul>
                 </div>
             `).join('')}
             <div class="flex justify-end mt-4">
-                <button 
+                <button
                     id="copy-all"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center gap-2"
+                    class="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
