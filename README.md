@@ -1,78 +1,104 @@
 # Email Finder
 
-**Email Finder** is a web application that helps generate professional email addresses from names and a company domain. The app supports multiple common email formats and offers multilingual support (French, English, Spanish).
+**Email Finder** is a lightweight, zero-dependency web application that generates professional email address formats from a person's name and their company domain. It supports three locales (French, English, Spanish) and auto-detects the browser language.
 
-**You can test it live here**: [https://email-finder-web.netlify.app](https://email-finder-web.netlify.app)
+**Live demo**: [https://email-finder-web.netlify.app](https://email-finder-web.netlify.app)
 
 ---
 
 ## Features
 
-- **Email Address Generation**: Easily create professional email addresses from names and a domain
-- **Multiple Formats**: Generates 8 different email formats for each name:
+- **9 email format patterns** generated per person:
   - `firstname.lastname@domain.com`
-  - `f.lastname@domain.com`
-  - `firstname.l@domain.com`
   - `firstnamelastname@domain.com`
-  - `flastname@domain.com`
+  - `f.lastname@domain.com`
+  - `firstname@domain.com`
   - `lastname.firstname@domain.com`
+  - `lastnamefirstname@domain.com`
+  - `flastname@domain.com`
   - `l.firstname@domain.com`
-  - `initials@domain.com`
-- **Multilingual Interface**: Available in **French**, **English**, and **Spanish**
-- **Accent Normalization**: Automatically removes accents and special characters
-- **Easy Copy**: Copy individual or all generated emails with one click
-- **Responsive Design**: Works great on desktop, tablet, and mobile devices  
+  - `fl@domain.com` (initials)
+- **Multi-person support** — add as many people as you need before generating
+- **Accent normalisation** — automatically strips diacritics (é → e, ñ → n, etc.)
+- **Domain validation** — rejects malformed domain entries before generation
+- **One-click copy** — copy an individual person's emails or all emails at once
+- **Multilingual UI** — French, English, and Spanish; falls back to French
+- **Dark mode** — persisted to `localStorage`
+- **Responsive** — works on desktop, tablet, and mobile
+- **XSS-safe** — all user input is escaped before any DOM insertion
 
 ---
 
-## Installation (optional)
+## Usage
 
-If you'd like to run it locally:
+1. Enter a **first name**, **last name**, and **company domain** (e.g. `company.com`)
+2. Click **"Add person"** — repeat for every person you want to look up
+3. Click **"Generate emails"** — 9 address formats appear for each person
+4. Use the copy icon next to a name to copy that person's emails, or **"Copy all emails"** to copy everything at once
+
+---
+
+## Running locally
 
 ```bash
 git clone https://github.com/gayakaci20/email-finder-web.git
 cd email-finder-web
-# Open index.html in your browser
+
+# Option A — open directly in a browser (file:// protocol)
+open index.html
+
+# Option B — serve over HTTP (recommended; enables Clipboard API)
+npm install
+npm start          # serves on http://localhost:3000
 ```
 
-Or visit the live demo here: [https://email-finder-web.netlify.app](https://email-finder-web.netlify.app)
-
-## Usage
-
-1. Enter one or more names separated by commas, followed by `@` and the company domain
-   - Example: `John Doe, Mary Smith @ company.com`
-2. Click the **"Search"** button
-3. The app will generate multiple email address formats for each name
-4. Use the copy buttons to save the addresses to your clipboard  
+> **Note:** The Clipboard API requires a secure context (HTTPS or `localhost`). The app includes an `execCommand` fallback for `file://` usage, but serving via `npm start` is recommended.
 
 ---
 
-## Project Structure
+## Project structure
 
-- `index.html` – Web page structure  
-- `script.js` – JavaScript logic for generating and copying email addresses  
-- `translations.js` – Multilingual support file  
+```
+email-finder-web/
+├── index.html        — HTML shell & Tailwind CDN configuration
+├── script.js         — All application logic (email generation, DOM, i18n, dark mode)
+├── translations.js   — i18n strings (fr / en / es)
+├── package.json      — Project metadata & dev scripts
+├── .editorconfig     — Editor consistency settings
+└── .prettierrc       — Prettier formatting config
+```
 
 ---
 
-## Technologies Used
+## Tech stack
 
-- HTML5
-- Tailwind CSS
-- JavaScript (Vanilla JS)
-- Google Fonts (Poppins)
+| Layer | Choice | Notes |
+|---|---|---|
+| Markup | HTML5 | Semantic, accessible |
+| Styling | Tailwind CSS (Play CDN) | Runtime JIT via CDN; suitable for this no-build project |
+| Logic | Vanilla JavaScript (ES2020+) | No framework, no bundler |
+| Fonts | Google Fonts — Poppins | Loaded from CDN |
+| Deployment | Netlify | Auto-deploy from `main` branch |
+
+---
+
+## Known limitations / future improvements
+
+- No build pipeline — Tailwind Play CDN is not version-pinned and not recommended for large production sites
+- No automated tests — core logic functions (`generateEmailPatterns`, `normalizeAccentedChars`) are good candidates for unit tests with Vitest or Jest
+- No TypeScript — JSDoc annotations would improve IDE support without adding a compile step
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Feel free to open an issue or submit a pull request to improve the app.
+Contributions are welcome. Please open an issue before submitting a pull request for significant changes.
 
 ---
 
 ## License
 
-This project is open source and available under the **MIT License**.
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
