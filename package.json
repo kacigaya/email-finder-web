@@ -1,0 +1,24 @@
+{
+  "name": "email-finder-web",
+  "version": "1.1.0",
+  "description": "Vanilla JS web app that generates professional email address formats from a name and company domain.",
+  "private": true,
+  "scripts": {
+    "start": "npx serve . --listen 3000",
+    "lint": "npx eslint .",
+    "format": "npx prettier --write ."
+  },
+  "keywords": [
+    "email",
+    "email-finder",
+    "email-generator",
+    "vanilla-js"
+  ],
+  "author": "Gaya KACI <https://github.com/gayakaci20>",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "serve": "^14.0.0"
+  }
+}

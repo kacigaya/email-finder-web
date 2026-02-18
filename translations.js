@@ -1,53 +1,109 @@
 const translations = {
-    'fr': {
-        title: 'Email Finder',
-        subtitle: 'Trouvez facilement des adresses email professionnelles',
-        search: 'Recherche',
-        searchPlaceholder: 'Noms séparés par des virgules @ domaine (ex: Jean Dupont, Marie Martin @ entreprise.com)',
-        searchHint: 'Entrez les noms séparés par des virgules, suivis du symbole @ et du domaine de l\'entreprise',
-        searchButton: 'Rechercher',
-        results: 'Résultats',
-        noResults: 'Entrez des noms et un domaine pour générer les adresses email possibles',
-        invalidFormat: 'Format invalide. Utilisez le format: "Noms @ domaine"',
-        copyEmails: 'Copier les emails',
-        copyAllEmails: 'Copier tous les emails',
-        copied: 'Copié !',
-        copyError: 'Erreur de copie',
-        openSource: 'Projet Open Source',
-        copyright: '© 2025 Email Finder'
-    },
-    'en': {
-        title: 'Email Finder',
-        subtitle: 'Easily find professional email addresses',
-        search: 'Search',
-        searchPlaceholder: 'Names separated by commas @ domain (ex: John Doe, Mary Smith @ company.com)',
-        searchHint: 'Enter names separated by commas, followed by the @ symbol and the company domain',
-        searchButton: 'Search',
-        results: 'Results',
-        noResults: 'Enter names and a domain to generate possible email addresses',
-        invalidFormat: 'Invalid format. Use the format: "Names @ domain"',
-        copyEmails: 'Copy emails',
-        copyAllEmails: 'Copy all emails',
-        copied: 'Copied!',
-        copyError: 'Copy error',
-        openSource: 'Open Source Project',
-        copyright: '© 2025 Email Finder'
-    },
-    'es': {
-        title: 'Email Finder',
-        subtitle: 'Encuentra fácilmente direcciones de correo electrónico profesionales',
-        search: 'Búsqueda',
-        searchPlaceholder: 'Nombres separados por comas @ dominio (ej: Juan Pérez, María García @ empresa.com)',
-        searchHint: 'Ingrese nombres separados por comas, seguidos del símbolo @ y el dominio de la empresa',
-        searchButton: 'Buscar',
-        results: 'Resultados',
-        noResults: 'Ingrese nombres y un dominio para generar posibles direcciones de correo electrónico',
-        invalidFormat: 'Formato inválido. Use el formato: "Nombres @ dominio"',
-        copyEmails: 'Copiar correos',
-        copyAllEmails: 'Copiar todos los correos',
-        copied: '¡Copiado!',
-        copyError: 'Error al copiar',
-        openSource: 'Proyecto de Código Abierto',
-        copyright: '© 2025 Email Finder'
-    }
-}; 
+  fr: {
+    // App shell
+    title: 'Email Finder',
+    subtitle: 'Trouvez facilement des adresses email professionnelles',
+
+    // Form labels
+    firstName: 'Prénom',
+    lastName: 'Nom',
+    domain: 'Domaine',
+    addPerson: 'Ajouter la personne',
+    generateEmails: 'Générer les emails',
+
+    // People list section
+    peopleList: 'Personnes ajoutées',
+    noPersonsAdded: 'Aucune personne ajoutée. Utilisez le formulaire ci-dessus pour ajouter des personnes.',
+    removePerson: 'Supprimer',
+
+    // Results section
+    results: "Suggestions d'emails",
+    noResults: "Ajoutez des personnes pour générer des suggestions d'emails.",
+
+    // Validation messages
+    fillAllFields: 'Veuillez remplir tous les champs.',
+    invalidDomain: 'Le domaine saisi est invalide (ex: entreprise.com).',
+
+    // Copy buttons
+    copyEmails: 'Copier les emails',
+    copyAllEmails: 'Copier tous les emails',
+    copied: 'Copié !',
+    copyError: 'Erreur de copie',
+
+    // Footer
+    openSource: 'Projet Open Source',
+    copyright: '© 2025 Email Finder',
+  },
+
+  en: {
+    // App shell
+    title: 'Email Finder',
+    subtitle: 'Easily find professional email addresses',
+
+    // Form labels
+    firstName: 'First name',
+    lastName: 'Last name',
+    domain: 'Domain',
+    addPerson: 'Add person',
+    generateEmails: 'Generate emails',
+
+    // People list section
+    peopleList: 'Added people',
+    noPersonsAdded: 'No person added yet. Use the form above to add people.',
+    removePerson: 'Remove',
+
+    // Results section
+    results: 'Email suggestions',
+    noResults: 'Add people to generate email suggestions.',
+
+    // Validation messages
+    fillAllFields: 'Please fill in all fields.',
+    invalidDomain: 'The domain entered is invalid (e.g. company.com).',
+
+    // Copy buttons
+    copyEmails: 'Copy emails',
+    copyAllEmails: 'Copy all emails',
+    copied: 'Copied!',
+    copyError: 'Copy error',
+
+    // Footer
+    openSource: 'Open Source Project',
+    copyright: '© 2025 Email Finder',
+  },
+
+  es: {
+    // App shell
+    title: 'Email Finder',
+    subtitle: 'Encuentra fácilmente direcciones de correo electrónico profesionales',
+
+    // Form labels
+    firstName: 'Nombre',
+    lastName: 'Apellido',
+    domain: 'Dominio',
+    addPerson: 'Agregar persona',
+    generateEmails: 'Generar correos',
+
+    // People list section
+    peopleList: 'Personas agregadas',
+    noPersonsAdded: 'Ninguna persona agregada. Use el formulario de arriba para agregar personas.',
+    removePerson: 'Eliminar',
+
+    // Results section
+    results: 'Sugerencias de correo',
+    noResults: 'Agrega personas para generar sugerencias de correo electrónico.',
+
+    // Validation messages
+    fillAllFields: 'Por favor complete todos los campos.',
+    invalidDomain: 'El dominio ingresado no es válido (ej: empresa.com).',
+
+    // Copy buttons
+    copyEmails: 'Copiar correos',
+    copyAllEmails: 'Copiar todos los correos',
+    copied: '¡Copiado!',
+    copyError: 'Error al copiar',
+
+    // Footer
+    openSource: 'Proyecto de Código Abierto',
+    copyright: '© 2025 Email Finder',
+  },
+};
