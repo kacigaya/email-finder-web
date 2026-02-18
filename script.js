@@ -1,20 +1,6 @@
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 /**
- * Safely escape a string for injection into HTML to prevent XSS.
- * @param {string} str
- * @returns {string}
- */
-function escapeHTML(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/**
  * Normalise accented characters to their ASCII equivalents.
  * @param {string} str
  * @returns {string}
@@ -32,87 +18,58 @@ function isValidDomain(domain) {
   return /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/.test(domain);
 }
 
-// ─── Dark Mode ────────────────────────────────────────────────────────────────
+// ─── Theme Toggle ─────────────────────────────────────────────────────────────
 
-function initDarkMode() {
-  const darkModeToggle = document.getElementById('darkModeToggle');
-  const html = document.documentElement;
+function initTheme() {
+  const toggle = document.getElementById('darkModeToggle');
+  const root   = document.documentElement;
 
-  // Read saved preference; fall back to light mode.
-  let savedTheme = 'light';
-  try {
-    savedTheme = localStorage.getItem('theme') || 'light';
-  } catch (_) {
-    // localStorage may be unavailable in private/restricted contexts.
-  }
+  let saved = 'dark';
+  try { saved = localStorage.getItem('theme') || 'dark'; } catch (_) {}
 
-  if (savedTheme === 'dark') {
-    html.classList.add('dark');
-  } else {
-    html.classList.remove('dark');
-  }
+  root.setAttribute('data-theme', saved);
 
-  darkModeToggle.addEventListener('click', () => {
-    html.classList.toggle('dark');
-    const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
-    try {
-      localStorage.setItem('theme', currentTheme);
-    } catch (_) {
-      // Ignore write failures in restricted contexts.
-    }
+  toggle.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (_) {}
   });
 }
 
 // ─── Internationalisation ─────────────────────────────────────────────────────
 
 function getBrowserLanguage() {
-  // navigator.language is the modern standard; navigator.userLanguage was IE-only.
-  const lang = navigator.language || 'fr';
-  return lang.split('-')[0];
+  return (navigator.language || 'fr').split('-')[0];
 }
 
 function translatePage(lang) {
-  const currentLang = translations[lang] ? lang : 'fr';
-  document.documentElement.lang = currentLang;
+  const l = translations[lang] ? lang : 'fr';
+  document.documentElement.lang = l;
 
-  document.querySelectorAll('[data-i18n]').forEach(element => {
-    const key = element.getAttribute('data-i18n');
-    if (translations[currentLang][key]) {
-      element.textContent = translations[currentLang][key];
-    }
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[l][key]) el.textContent = translations[l][key];
   });
 
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
-    const key = element.getAttribute('data-i18n-placeholder');
-    if (translations[currentLang][key]) {
-      element.placeholder = translations[currentLang][key];
-    }
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (translations[l][key]) el.placeholder = translations[l][key];
   });
 }
 
-/** Return the active locale string. */
-function currentLang() {
-  return document.documentElement.lang || 'fr';
-}
-
-/** Translate a single key in the active locale. */
-function t(key) {
-  return (translations[currentLang()] || translations['fr'])[key] || key;
-}
+function currentLang() { return document.documentElement.lang || 'fr'; }
+function t(key) { return (translations[currentLang()] || translations['fr'])[key] || key; }
 
 // ─── Boot ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   translatePage(getBrowserLanguage());
-  initDarkMode();
+  initTheme();
 });
 
 // ─── Email Generation ─────────────────────────────────────────────────────────
 
 /**
- * Generate all supported email patterns for a person object.
- * Guards against empty first/last name when accessing character indices.
- *
  * @param {{ firstName: string, lastName: string, domain: string }} person
  * @returns {string[]}
  */
@@ -121,8 +78,8 @@ function generateEmailPatterns(person) {
   const lastName  = normalizeAccentedChars(person.lastName.trim()).toLowerCase();
   const domain    = person.domain.trim().toLowerCase();
 
-  const f0 = firstName.length > 0 ? firstName[0] : '';
-  const l0 = lastName.length  > 0 ? lastName[0]  : '';
+  const f0 = firstName[0] || '';
+  const l0 = lastName[0]  || '';
 
   return [
     `${firstName}.${lastName}@${domain}`,
@@ -134,103 +91,79 @@ function generateEmailPatterns(person) {
     `${f0}${lastName}@${domain}`,
     `${l0}.${firstName}@${domain}`,
     `${f0}${l0}@${domain}`,
-  ].filter(email => email.length > 1); // drop degenerate entries
+  ].filter(e => e.replace(/@.*/, '').length > 0);
 }
 
 // ─── Clipboard ────────────────────────────────────────────────────────────────
 
-/**
- * Copy text to clipboard and provide visual feedback on the trigger button.
- * Falls back to document.execCommand for non-HTTPS / older environments.
- *
- * @param {string} text
- * @param {HTMLButtonElement} button
- * @returns {Promise<boolean>}
- */
-async function copyToClipboard(text, button) {
-  let success = false;
+const ICON_COPY = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:12px;height:12px">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3"/>
+</svg>`;
 
+const ICON_CHECK = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:12px;height:12px">
+  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+</svg>`;
+
+/**
+ * Copy text to clipboard; show visual feedback on button.
+ * @param {string} text
+ * @param {HTMLButtonElement} btn
+ */
+async function copyToClipboard(text, btn) {
+  let ok = false;
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
-      success = true;
+      ok = true;
     } else {
-      // Fallback for non-HTTPS or older browsers.
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity  = '0';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      success = document.execCommand('copy');
-      document.body.removeChild(textarea);
+      const ta = Object.assign(document.createElement('textarea'), {
+        value: text,
+        style: 'position:fixed;opacity:0',
+      });
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
     }
   } catch (err) {
-    console.error('Failed to copy text:', err);
+    console.error('Clipboard write failed:', err);
   }
 
-  const originalContent = button.innerHTML;
-  if (success) {
-    button.innerHTML = `
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-      </svg>
-    `;
-    button.classList.add('text-green-600');
-  } else {
-    button.innerHTML = `
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    `;
-    button.classList.add('text-red-600');
-  }
-
-  setTimeout(() => {
-    button.innerHTML = originalContent;
-    button.classList.remove('text-green-600', 'text-red-600');
-  }, 2000);
-
-  return success;
+  const prev = btn.innerHTML;
+  btn.innerHTML = ok ? ICON_CHECK : `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:12px;height:12px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+  btn.style.color = ok ? 'var(--success)' : 'var(--danger)';
+  setTimeout(() => { btn.innerHTML = prev; btn.style.color = ''; }, 2000);
+  return ok;
 }
 
 // ─── People Store ─────────────────────────────────────────────────────────────
 
-/** @type {Array<{ id: number, firstName: string, lastName: string, domain: string }>} */
+/** @type {Array<{id:number, firstName:string, lastName:string, domain:string}>} */
 let people = [];
 
 // ─── DOM References ───────────────────────────────────────────────────────────
 
-const form                = document.getElementById('personForm');
-const peopleListEl        = document.getElementById('peopleList');
-const resultsContainerEl  = document.getElementById('resultsContainer');
-const generateEmailsBtn   = document.getElementById('generateEmails');
+const form               = document.getElementById('personForm');
+const peopleListEl       = document.getElementById('peopleList');
+const resultsContainerEl = document.getElementById('resultsContainer');
+const generateEmailsBtn  = document.getElementById('generateEmails');
 
 // ─── Inline Validation Error ──────────────────────────────────────────────────
 
-/**
- * Show an inline error message below the form.
- * @param {string} message
- */
-function showFormError(message) {
-  let errorEl = document.getElementById('formError');
-  if (!errorEl) {
-    errorEl = document.createElement('p');
-    errorEl.id = 'formError';
-    errorEl.className = 'mt-2 text-sm text-red-600 dark:text-red-400';
-    form.appendChild(errorEl);
+function showFormError(msg) {
+  let el = document.getElementById('formError');
+  if (!el) {
+    el = document.createElement('p');
+    el.id = 'formError';
+    form.appendChild(el);
   }
-  errorEl.textContent = message;
-  errorEl.hidden = false;
+  el.textContent = msg;
+  el.hidden = false;
 }
 
 function clearFormError() {
-  const errorEl = document.getElementById('formError');
-  if (errorEl) {
-    errorEl.hidden = true;
-    errorEl.textContent = '';
-  }
+  const el = document.getElementById('formError');
+  if (el) { el.hidden = true; el.textContent = ''; }
 }
 
 // ─── People List Rendering ────────────────────────────────────────────────────
@@ -239,135 +172,155 @@ function updatePeopleList() {
   peopleListEl.innerHTML = '';
 
   if (people.length === 0) {
-    const emptyDiv = document.createElement('div');
-    emptyDiv.className = 'p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700';
-    const emptyP = document.createElement('p');
-    emptyP.className = 'text-sm sm:text-base text-gray-600 dark:text-gray-400';
-    emptyP.setAttribute('data-i18n', 'noPersonsAdded');
-    emptyP.textContent = t('noPersonsAdded');
-    emptyDiv.appendChild(emptyP);
-    peopleListEl.appendChild(emptyDiv);
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = t('noPersonsAdded');
+    peopleListEl.appendChild(empty);
     return;
   }
 
   people.forEach(person => {
-    const personElement = document.createElement('div');
-    personElement.className = 'flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg mb-2 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200';
+    // Chip container
+    const chip = document.createElement('div');
+    chip.className = 'person-chip';
 
-    // Build content via DOM API to avoid XSS.
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'flex-grow';
+    // Avatar initials
+    const avatar = document.createElement('div');
+    avatar.className = 'result-avatar';
+    avatar.textContent = (person.firstName[0] || '?').toUpperCase();
 
-    const nameP = document.createElement('p');
-    nameP.className = 'text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100';
-    nameP.textContent = `${person.firstName} ${person.lastName}`;
+    // Info
+    const info = document.createElement('div');
+    info.className = 'person-info';
+    info.style.marginLeft = '12px';
+    info.style.flex = '1';
 
-    const domainP = document.createElement('p');
-    domainP.className = 'text-xs sm:text-sm text-gray-500 dark:text-gray-400';
-    domainP.textContent = `@${person.domain}`;
+    const name = document.createElement('span');
+    name.className = 'person-name';
+    name.textContent = `${person.firstName} ${person.lastName}`;
 
-    infoDiv.appendChild(nameP);
-    infoDiv.appendChild(domainP);
+    const domain = document.createElement('span');
+    domain.className = 'person-domain';
+    domain.textContent = `@${person.domain}`;
 
+    info.appendChild(name);
+    info.appendChild(domain);
+
+    // Remove button
     const removeBtn = document.createElement('button');
-    removeBtn.className = 'ml-4 text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition duration-200';
+    removeBtn.className = 'remove-btn';
     removeBtn.setAttribute('aria-label', t('removePerson'));
-    removeBtn.innerHTML = `
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-    `;
+    removeBtn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>`;
     removeBtn.addEventListener('click', () => removePerson(person.id));
 
-    personElement.appendChild(infoDiv);
-    personElement.appendChild(removeBtn);
-    peopleListEl.appendChild(personElement);
+    chip.appendChild(avatar);
+    chip.appendChild(info);
+    chip.appendChild(removeBtn);
+    peopleListEl.appendChild(chip);
   });
 }
 
-// ─── Email Suggestions Rendering ──────────────────────────────────────────────
+// ─── Results Rendering ────────────────────────────────────────────────────────
 
 function generateEmailSuggestions() {
   resultsContainerEl.innerHTML = '';
 
   if (people.length === 0) {
-    const emptyDiv = document.createElement('div');
-    emptyDiv.className = 'p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700';
-    const emptyP = document.createElement('p');
-    emptyP.className = 'text-sm sm:text-base text-gray-600 dark:text-gray-400';
-    emptyP.textContent = t('noResults');
-    emptyDiv.appendChild(emptyP);
-    resultsContainerEl.appendChild(emptyDiv);
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = t('noResults');
+    resultsContainerEl.appendChild(empty);
     return;
   }
 
   const allEmails = [];
-  const wrapper = document.createElement('div');
-  wrapper.className = 'space-y-4';
 
-  people.forEach((person, index) => {
+  people.forEach((person, idx) => {
     const patterns = generateEmailPatterns(person);
     allEmails.push(...patterns);
 
     const card = document.createElement('div');
-    card.className = 'p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200';
+    card.className = 'result-card';
+    card.style.animationDelay = `${idx * 60}ms`;
 
-    // Header row
-    const headerDiv = document.createElement('div');
-    headerDiv.className = 'flex justify-between items-center mb-3';
+    // ── Card header
+    const header = document.createElement('div');
+    header.className = 'result-header';
 
-    const heading = document.createElement('h3');
-    heading.className = 'text-sm sm:text-base font-medium text-gray-900 dark:text-gray-100';
-    // textContent is XSS-safe.
-    heading.textContent = `${person.firstName} ${person.lastName} (@${person.domain})`;
+    const personMeta = document.createElement('div');
+    personMeta.className = 'result-person';
 
-    const copyPersonBtn = document.createElement('button');
-    copyPersonBtn.id = `copy-person-${index}`;
-    copyPersonBtn.className = 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition duration-200';
-    copyPersonBtn.setAttribute('title', t('copyEmails'));
-    copyPersonBtn.innerHTML = `
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-      </svg>
-    `;
-    copyPersonBtn.addEventListener('click', () => copyToClipboard(patterns.join('\n'), copyPersonBtn));
+    const avatar = document.createElement('div');
+    avatar.className = 'result-avatar';
+    avatar.textContent = (person.firstName[0] || '?').toUpperCase();
 
-    headerDiv.appendChild(heading);
-    headerDiv.appendChild(copyPersonBtn);
+    const meta = document.createElement('div');
 
-    // Email list
+    const nameEl = document.createElement('div');
+    nameEl.className = 'result-name';
+    nameEl.textContent = `${person.firstName} ${person.lastName}`;
+
+    const domainEl = document.createElement('div');
+    domainEl.className = 'result-domain';
+    domainEl.textContent = `@${person.domain}`;
+
+    meta.appendChild(nameEl);
+    meta.appendChild(domainEl);
+    personMeta.appendChild(avatar);
+    personMeta.appendChild(meta);
+
+    // Copy person button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-person-btn';
+    copyBtn.innerHTML = `${ICON_COPY}<span>${t('copyEmails')}</span>`;
+    copyBtn.addEventListener('click', () => copyToClipboard(patterns.join('\n'), copyBtn));
+
+    header.appendChild(personMeta);
+    header.appendChild(copyBtn);
+
+    // ── Email rows
     const ul = document.createElement('ul');
-    ul.className = 'space-y-1.5';
-    patterns.forEach(pattern => {
+    ul.className = 'result-emails';
+
+    patterns.forEach(email => {
       const li = document.createElement('li');
-      li.className = 'text-sm sm:text-base text-gray-600 dark:text-gray-300 font-mono';
-      li.textContent = pattern; // textContent is XSS-safe
+      li.className = 'email-row';
+
+      const addr = document.createElement('span');
+      addr.className = 'email-address';
+      addr.textContent = email;
+
+      const rowCopyBtn = document.createElement('button');
+      rowCopyBtn.className = 'email-copy-btn';
+      rowCopyBtn.setAttribute('aria-label', t('copyEmails'));
+      rowCopyBtn.innerHTML = ICON_COPY;
+      rowCopyBtn.addEventListener('click', () => copyToClipboard(email, rowCopyBtn));
+
+      li.appendChild(addr);
+      li.appendChild(rowCopyBtn);
       ul.appendChild(li);
     });
 
-    card.appendChild(headerDiv);
+    card.appendChild(header);
     card.appendChild(ul);
-    wrapper.appendChild(card);
+    resultsContainerEl.appendChild(card);
   });
 
-  // Copy-all button
-  const footerDiv = document.createElement('div');
-  footerDiv.className = 'flex justify-end mt-4';
+  // ── Copy-all row
+  const copyAllRow = document.createElement('div');
+  copyAllRow.className = 'copy-all-row';
 
   const copyAllBtn = document.createElement('button');
-  copyAllBtn.id = 'copy-all';
-  copyAllBtn.className = 'bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2';
-  copyAllBtn.innerHTML = `
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-    </svg>
-    <span>${t('copyAllEmails')}</span>
-  `;
+  copyAllBtn.className = 'btn btn-primary';
+  copyAllBtn.style.fontSize = '13px';
+  copyAllBtn.style.padding = '10px 20px';
+  copyAllBtn.innerHTML = `${ICON_COPY}<span>${t('copyAllEmails')}</span>`;
   copyAllBtn.addEventListener('click', () => copyToClipboard(allEmails.join('\n'), copyAllBtn));
 
-  footerDiv.appendChild(copyAllBtn);
-  wrapper.appendChild(footerDiv);
-  resultsContainerEl.appendChild(wrapper);
+  copyAllRow.appendChild(copyAllBtn);
+  resultsContainerEl.appendChild(copyAllRow);
 }
 
 // ─── Person CRUD ──────────────────────────────────────────────────────────────
@@ -384,7 +337,6 @@ function addPerson(event) {
     showFormError(t('fillAllFields'));
     return;
   }
-
   if (!isValidDomain(domain)) {
     showFormError(t('invalidDomain'));
     return;
@@ -396,12 +348,9 @@ function addPerson(event) {
 }
 
 function removePerson(id) {
-  people = people.filter(person => person.id !== id);
+  people = people.filter(p => p.id !== id);
   updatePeopleList();
-  // Regenerate if results are already visible.
-  if (resultsContainerEl.children.length > 0) {
-    generateEmailSuggestions();
-  }
+  if (resultsContainerEl.children.length > 0) generateEmailSuggestions();
 }
 
 // ─── Event Listeners ──────────────────────────────────────────────────────────
